@@ -1,0 +1,101 @@
+// app global css
+
+@import '~variables'
+
+// todo: удалить
+.out {
+    outline: 1px solid red
+}
+
+body {
+    overflow-y: scroll !important
+}
+
+.dont-break-out {
+    word-break: break-all
+    // overflow-wrap: break-word
+//   /* These are technically the same, but use both */
+//   overflow-wrap: break-word
+//   word-wrap: break-word
+//   -ms-word-break: break-all
+//   /* This is the dangerous one in WebKit, as it breaks things wherever */
+//   word-break: break-all
+//   /* Instead use this non-standard one: */
+//   word-break: break-word
+//   /* Adds a hyphen where the word breaks, if supported (No Blink) */
+//   -ms-hyphens: auto
+//   -moz-hyphens: auto
+//   -webkit-hyphens: auto
+//   hyphens: auto
+}
+
+.main-toolbar .q-router-link-active.active {
+    background-color: $secondary
+    color: white !important
+}
+
+.personal-area-tab {
+    border-left: 1px solid $neutral
+}
+.personal-area-tab:last-child  {
+    border-right: 1px solid $neutral
+}
+.main-nav-tab {
+    background-color: $neutral
+    border-left: 1px solid $neutral
+    height: 50px;
+}
+.main-nav-tab:hover {
+    background: $secondary !important
+    color: white
+}
+.main-nav-tab__label {
+    font-size: 150%
+}
+.main-nav-tabs > * {
+    background: $neutral !important
+}
+.main-toolbar {
+    background-color: $neutral
+}
+
+.main-footer, .main-header {
+    background-color: $neutral
+}
+.copy {
+    color: #949292
+}
+
+.top-round-borders {
+    border-top-left-radius: $generic-border-radius
+    border-top-right-radius: $generic-border-radius
+}
+.round-input {
+    border-radius: 50px
+}
+.border-primary {
+    border: 1px solid $primary
+}
+.border-secondary {
+    border: 1px solid $secondary
+}
+.border-white {
+    border: 1px solid white
+}
+.border-grey {
+    border: 1px solid $tertiary
+}
+.border-secondary-thin {
+    border: 1px solid $secondary
+}
+.border-primary-thin {
+    border: 1px solid $primary
+}
+
+.g-recaptcha {
+  transform: scale(0.8);
+  transform-origin: 50% 0;
+}
+.g-recaptcha>div {
+  margin: 0 auto;
+}

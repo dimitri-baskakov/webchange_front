@@ -1,0 +1,527 @@
+swagger: '2.0'
+info:
+  description: Документация по webchange API
+  version: 1.0.0
+  title: Webchange
+  termsOfService: 'https://webchange.org/agreement'
+  contact:
+    email: webchange@gmail.com
+  license:
+    name: Apache 2.0
+    url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
+host: webchange.org
+basePath: /api/v1
+tags:
+  - name: rates
+    description: Курсы валют
+  - name: user
+    description: Действия для пользователей
+  - name: wallet
+    description: Кошельки
+schemes:
+  - https
+paths:
+  /rates:
+    get:
+      tags:
+        - rates
+      summary: Получение курсов валют (ставок обмена)
+      description: описание ...
+      operationId: getRates
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      # parameters: []
+      responses:
+        '200':
+          description: OK
+          schema:
+            type: object
+            # additionalProperties:
+            #   type: integer
+            #   format: int32
+  /user/register:
+    post:
+      tags:
+        - user
+      summary: Создание пользователя
+      description: Регистрация в системе
+      operationId: registerUser
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          description: Создаваемый обект - пользователь
+          required: true
+          schema:
+            $ref: '#/definitions/UserRegister'
+      responses:
+        '200':
+          description: ОК
+          schema:
+            $ref: '#/definitions/UserRegisterResponse'
+        '403':
+          description: ошибка
+          schema:
+            type: object
+            example: {
+              'ошибка': 'Неверно заполненена форма регистрации ...'
+            }
+  /user/login:
+    post:
+      tags:
+        - user
+      summary: Вход пользователя в систему
+      description: Логин
+      operationId: loginUser
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          description: логин и пароль для входа
+          required: true
+          schema:
+            $ref: '#/definitions/UserLogin'
+      responses:
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/UserLoginResponse'
+          headers:
+            X-Expires-After:
+              type: string
+              format: date-time
+              description: date in UTC when token expires
+        '403':
+          description: ошибка
+          schema:
+            type: object
+            example: {
+              'ошибка': 'неверный логин или пароль ...'
+            }
+  /user/logout:
+    post:
+      tags:
+        - user
+      summary: Выход пользователя из системы
+      description: Логаут
+      operationId: logoutUser
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          description: токен доступа для выхода
+          required: true
+          schema:
+            $ref: '#/definitions/UserLogout'
+      responses:
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/UserLogoutResponse'
+          headers:
+            X-Expires-After:
+              type: string
+              format: date-time
+              description: date in UTC when token expires
+        '401':
+          description: ошибка
+          schema:
+            type: object
+            example: {
+              'ошибка': 'пользователь не авторизован ...'
+            }
+  /user/recovery-request:
+    post:
+      tags:
+        - user
+      summary: Запрос восстановления доступа
+      description: Запрос сброса и восстановления пароля
+      operationId: RecoveryRequest
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          description: почта пользователя
+          required: true
+          schema:
+            $ref: '#/definitions/RecoveryRequest'
+      responses:
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/RecoveryRequestResponse'
+          headers:
+            X-Expires-After:
+              type: string
+              format: date-time
+              description: date in UTC when token expires
+        '403':
+          description: ошибка
+          schema:
+            type: object
+            example: {
+              'ошибка': 'пользователь не зарегистрирован ...'
+            }
+  /user/recovery-password:
+    post:
+      tags:
+        - user
+      summary: Восстановление доступа
+      description: Сброс и ввод нового пароля
+      operationId: RecoveryPassword
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          description: токен сброса пароля (пришёл на почту в виде ссылки)
+          required: true
+          schema:
+            $ref: '#/definitions/RecoveryPassword'
+      responses:
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/RecoveryPasswordResponse'
+          headers:
+            X-Expires-After:
+              type: string
+              format: date-time
+              description: date in UTC when token expires
+        '403':
+          description: ошибка
+          schema:
+            type: object
+            example: {
+              'ошибка': 'неверный токен изменения пароля ...'
+            }
+  /user/change-password:
+    post:
+      tags:
+        - user
+      summary: Изменение пароля
+      description: Изменение пароля в личном кабинете
+      operationId: ChangePassword
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          description: старый, новый пароль, подтверждение пароля
+          required: true
+          schema:
+            $ref: '#/definitions/ChangePassword'
+      responses:
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/ChangePasswordResponse'
+          headers:
+            X-Expires-After:
+              type: string
+              format: date-time
+              description: date in UTC when token expires
+        '401':
+          description: ошибка
+          schema:
+            type: object
+            example: {
+              'ошибка': 'пользователь не авторизован ...'
+            }
+  /user/refresh:
+    post:
+      tags:
+        - user
+      summary: Обновить токены
+      description: Обновление токена доступа и токена обновления
+      operationId: refreshToken
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          description: токен обновления
+          required: true
+          schema:
+            $ref: '#/definitions/TokenRefresh'
+      responses:
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/TokenRefreshResponse'
+          headers:
+            X-Expires-After:
+              type: string
+              format: date-time
+              description: date in UTC when token expires
+        '401':
+          description: ошибка
+          schema:
+            type: object
+            example: {
+              'ошибка': 'пользователь не авторизован ...'
+            }
+  '/user':
+    post:
+      tags:
+        - user
+      summary: Информация о пользователе
+      description: Получить информацию о пользователе
+      operationId: getUserById
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          description: токен обновления
+          required: true
+          schema:
+            $ref: '#/definitions/User'
+      responses:
+        '200':
+          description: successful operation
+          schema:
+            $ref: '#/definitions/UserResponse'
+        '401':
+          description: ошибка
+          schema:
+            type: object
+            example: {
+              'ошибка': 'пользователь не авторизован ...'
+            }
+        '404':
+          description: Пользователь не найден
+    # put:
+    #   tags:
+    #     - user
+    #   summary: Updated user
+    #   description: This can only be done by the logged in user.
+    #   operationId: updateUser
+    #   produces:
+    #     - application/xml
+    #     - application/json
+    #   parameters:
+    #     - name: username
+    #       in: path
+    #       description: name that need to be updated
+    #       required: true
+    #       type: string
+    #     - in: body
+    #       name: body
+    #       description: Updated user object
+    #       required: true
+    #       schema:
+    #         $ref: '#/definitions/User'
+    #   responses:
+    #     '400':
+    #       description: Invalid user supplied
+    #     '404':
+    #       description: User not found
+securityDefinitions:
+  petstore_auth:
+    type: oauth2
+    authorizationUrl: 'http://petstore.swagger.io/oauth/dialog'
+    flow: implicit
+    scopes:
+      'write:pets': modify pets in your account
+      'read:pets': read your pets
+  api_key:
+    type: apiKey
+    name: api_key
+    in: header
+definitions:
+  UserRegister:
+    type: object
+    properties:
+      # id:
+      #   type: integer
+      #   format: int64
+      agreementChecked:
+        type: boolean
+        default: true
+      email:
+        type: string
+      gRecaptchaResponse:
+        type: string
+      password:
+        type: string
+      passwordConfirmation:
+        type: string
+    xml:
+      name: User
+  UserRegisterResponse:
+    type: object
+    properties:
+      accessToken:
+        type: string
+      expiresIn:
+        type: integer
+        default: 3000
+      message:
+        type: string
+      success:
+        type: boolean
+        default: true
+      tokenType:
+        type: string
+      refreshToken:
+        type: string
+  UserLogin:
+    type: object
+    properties:
+      email:
+        type: string
+      gRecaptchaResponse:
+        type: string
+      password:
+        type: string
+  UserLoginResponse:
+    type: object
+    properties:
+      accessToken:
+        type: string
+      expiresIn:
+        type: integer
+        default: 3000
+      message:
+        type: string
+      success:
+        type: boolean
+        default: true
+      tokenType:
+        type: string
+      refreshToken:
+        type: string
+  UserLogout:
+    type: object
+    properties:
+      refreshToken:
+        type: string
+  UserLogoutResponse:
+    type: object
+    properties:
+      message:
+        type: string
+      success:
+        type: boolean
+        default: true
+  User:
+    type: object
+    properties:
+      refreshToken:
+        type: string
+  UserResponse:
+    type: object
+    properties:
+      message:
+        type: string
+      success:
+        type: boolean
+        default: true
+  RecoveryRequest:
+    type: object
+    properties:
+      email:
+        type: string
+      gRecaptchaResponse:
+        type: string
+  RecoveryRequestResponse:
+    type: object
+    properties:
+      message:
+        type: string
+      success:
+        type: boolean
+        default: true
+  RecoveryPassword:
+    type: object
+    properties:
+      password:
+        type: string
+      passwordConfirmation:
+        type: string
+      recoveryToken:
+        type: string
+  RecoveryPasswordResponse:
+    type: object
+    properties:
+      accessToken:
+        type: string
+      expiresIn:
+        type: number
+        default: 3000
+      message:
+        type: string
+      success:
+        type: boolean
+        default: true
+      tokenType:
+        type: string
+      refreshToken:
+        type: string
+  ChangePassword:
+    type: object
+    properties:
+      oldPassword:
+        type: string
+      password:
+        type: string
+      passwordConfirmation:
+        type: string
+  ChangePasswordResponse:
+    type: object
+    properties:
+      accessToken:
+        type: string
+      expiresIn:
+        type: number
+        default: 3000
+      message:
+        type: string
+      success:
+        type: boolean
+        default: true
+      tokenType:
+        type: string
+      refreshToken:
+        type: string
+  TokenRefresh:
+    type: object
+    properties:
+      refreshToken:
+        type: string
+  TokenRefreshResponse:
+    type: object
+    properties:
+      accessToken:
+        type: string
+      expiresIn:
+        type: integer
+        default: 3000
+      message:
+        type: string
+      success:
+        type: boolean
+        default: true
+      tokenType:
+        type: string
+      refreshToken:
+        type: string
+  ApiResponse:
+    type: object
+    properties:
+      # code:
+      #   type: integer
+      #   format: int32
+      # type:
+      #   type: string
+      success:
+        type: boolean
+      message:
+        type: string

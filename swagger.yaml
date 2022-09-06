@@ -1,0 +1,1075 @@
+swagger: '2.0'
+info:
+  description: Документация по webchange API
+  version: 1.0.0
+  title: Webchange
+  termsOfService: 'https://webchange.org/agreement'
+  contact:
+    email: webchange@gmail.com
+  license:
+    name: Apache 2.0
+    url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
+host: webchange.org
+basePath: /api/v1
+tags:
+  - name: rates
+    description: Курсы валют
+  - name: users
+    description: Действия для пользователей
+  - name: wallet
+    description: Кошельки
+  - name: statement
+    description: Заявки и история
+  - name: referral
+    description: Реферальная программа
+schemes:
+  - https
+paths:
+  /rates:
+    get:
+      tags:
+        - rates
+      summary: Получение курсов валют (ставок обмена)
+      description: описание ...
+      operationId: ratesGet
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      responses:
+        '200':
+          description: OK
+          schema:
+            type: object
+  /users/register:
+    post:
+      tags:
+        - users
+      summary: Создание пользователя
+      description: Регистрация в системе
+      operationId: userRegister
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          description: Создаваемый обект - пользователь
+          required: true
+          schema:
+            $ref: '#/definitions/UserRegister'
+      responses:
+        '200':
+          description: ОК
+          schema:
+            $ref: '#/definitions/UserRegisterResponse'
+        '403':
+          description: ошибка
+          schema:
+            type: object
+            example:
+              ошибка: Неверно заполненена форма регистрации ...
+  /users/login:
+    post:
+      tags:
+        - users
+      summary: Вход пользователя в систему
+      description: Логин
+      operationId: userLogin
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          description: логин и пароль для входа
+          required: true
+          schema:
+            $ref: '#/definitions/UserLogin'
+      responses:
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/UserLoginResponse'
+          headers:
+            X-Expires-After:
+              type: string
+              format: date-time
+              description: date in UTC when token expires
+        '403':
+          description: ошибка
+          schema:
+            type: object
+            example:
+              ошибка: неверный логин или пароль ...
+  /users/logout:
+    post:
+      # security:
+        # - bearerAuth: []
+      tags:
+        - users
+      summary: Выход пользователя из системы
+      description: Логаут
+      operationId: userLogout
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          description: токен доступа для выхода
+          required: true
+          schema:
+            $ref: '#/definitions/UserLogout'
+      responses:
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/UserLogoutResponse'
+          headers:
+            X-Expires-After:
+              type: string
+              format: date-time
+              description: date in UTC when token expires
+        '401':
+          description: ошибка
+          schema:
+            type: object
+            example:
+              ошибка: Пользователь не авторизован ...
+  /users/recovery-request:
+    post:
+      tags:
+        - users
+      summary: Запрос восстановления доступа
+      description: Запрос сброса и восстановления пароля
+      operationId: RecoveryRequest
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          description: почта пользователя
+          required: true
+          schema:
+            $ref: '#/definitions/RecoveryRequest'
+      responses:
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/RecoveryRequestResponse'
+          headers:
+            X-Expires-After:
+              type: string
+              format: date-time
+              description: date in UTC when token expires
+        '403':
+          description: ошибка
+          schema:
+            type: object
+            example:
+              ошибка: пользователь не зарегистрирован ...
+  /users/recovery-password:
+    post:
+      tags:
+        - users
+      summary: Восстановление доступа
+      description: Сброс и ввод нового пароля
+      operationId: RecoveryPassword
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          description: токен сброса пароля (пришёл на почту в виде ссылки)
+          required: true
+          schema:
+            $ref: '#/definitions/RecoveryPassword'
+      responses:
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/RecoveryPasswordResponse'
+          headers:
+            X-Expires-After:
+              type: string
+              format: date-time
+              description: date in UTC when token expires
+        '403':
+          description: ошибка
+          schema:
+            type: object
+            example:
+              ошибка: неверный токен изменения пароля ...
+  /users/change-password:
+    post:
+      # security:
+        # - bearerAuth: []
+      tags:
+        - users
+      summary: Изменение пароля
+      description: Изменение пароля в личном кабинете
+      operationId: ChangePassword
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          description: 'старый, новый пароль, подтверждение пароля'
+          required: true
+          schema:
+            $ref: '#/definitions/ChangePassword'
+      responses:
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/ChangePasswordResponse'
+          headers:
+            X-Expires-After:
+              type: string
+              format: date-time
+              description: date in UTC when token expires
+        '401':
+          description: ошибка
+          schema:
+            type: object
+            example:
+              ошибка: Пользователь не авторизован ...
+  /users/refresh:
+    post:
+      tags:
+        - users
+      summary: Обновить токены
+      description: Обновление токена доступа и токена обновления
+      operationId: tokenRefresh
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          description: токен обновления
+          required: true
+          schema:
+            $ref: '#/definitions/TokenRefresh'
+      responses:
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/TokenRefreshResponse'
+          headers:
+            X-Expires-After:
+              type: string
+              format: date-time
+              description: date in UTC when token expires
+        '401':
+          description: ошибка
+          schema:
+            type: object
+            example:
+              ошибка: Пользователь не авторизован ...
+  /users:
+    get:
+      # security:
+        # - bearerAuth: []
+      tags:
+        - users
+      summary: Информация о пользователе
+      description: Получить информацию о пользователе
+      operationId: userGetById
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          description: ид пользователя?
+          required: true
+          schema:
+            $ref: '#/definitions/User'
+      responses:
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/UserResponse'
+        '401':
+          description: ошибка
+          schema:
+            type: object
+            example:
+              ошибка: Пользователь не авторизован ...
+        '404':
+          description: Пользователь не найден
+  /wallets:
+    get:
+      # security:
+        # - bearerAuth: []
+      tags:
+        - wallet
+      summary: Информация о кошельках пользователя
+      description: Получить список кошельков
+      operationId: userWalletsGet
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          description: ид пользователя?
+          required: true
+          schema:
+            $ref: '#/definitions/User'
+      responses:
+        '200':
+          description: OK
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/WalletResponse"
+        '401':
+          description: ошибка
+          schema:
+            type: object
+            example:
+              ошибка: Пользователь не авторизован ...
+    post:
+      # security:
+        # - bearerAuth: []
+      tags:
+        - wallet
+      summary: Создание кошелька
+      description: Создать новый кошелек пользователя
+      operationId: userWalletCreate
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          description: Параметры кошелька
+          required: true
+          schema:
+            $ref: '#/definitions/WalletCreate'
+      responses:
+        '200':
+          description: OK
+          schema:
+            type: object
+            properties:
+              id:
+                type: integer
+                format: int64
+                example: 524
+              success:
+                type: boolean
+                example: true
+        '401':
+          description: ошибка
+          schema:
+            type: object
+            example:
+              ошибка: Пользователь не авторизован ...
+    put:
+      # security:
+        # - bearerAuth: []
+      tags:
+        - wallet
+      summary: Изменение кошелька пользователя
+      description: Обновить \ изменить конкретное поле кошелька
+      operationId: userWalletUpdate
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          description: Ид кошелька + Изменяемое поле + значение поля для выбранного кошелька
+          required: true
+          schema:
+            $ref: '#/definitions/WalletUpdate'
+      responses:
+        '200':
+          description: OK
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: true
+              message:
+                type: string
+                example: Кошелек успешно обновлен
+        '401':
+          description: ошибка
+          schema:
+            type: object
+            example:
+              ошибка: Пользователь не авторизован ...
+    delete:
+      # security:
+        # - bearerAuth: []
+      tags:
+        - wallet
+      summary: Удаление кошелька пользователя
+      description: Удалить кошелек
+      operationId: userWalletDelete
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          description: Ид выбранного кошелька
+          required: true
+          schema:
+            type: object
+            properties:
+              id:
+                type: integer
+                format: int64
+                example: 27
+      responses:
+        '200':
+          description: OK
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: true
+              message:
+                type: string
+                example: Кошелек успешно удален
+        '401':
+          description: ошибка
+          schema:
+            type: object
+            example:
+              ошибка: Пользователь не авторизован ...
+  /statements:
+    get:
+      # security:
+        # - bearerAuth: []
+      tags:
+        - statement
+      summary: Информация о заявках пользователя
+      description: Получить список (историю) заявок
+      operationId: userStatementsGet
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          description: ид пользователя?
+          required: true
+          schema:
+            $ref: '#/definitions/User'
+      responses:
+        '200':
+          description: OK
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/StatementResponse"
+        '401':
+          description: ошибка
+          schema:
+            type: object
+            example:
+              ошибка: Пользователь не авторизован ...
+    post:
+      tags:
+        - statement
+      summary: Создание заявки
+      description: Создать новую заявку на обмен
+      operationId: userStatementCreate
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          description: Параметры заявки
+          required: true
+          schema:
+            $ref: '#/definitions/StatementCreate'
+      responses:
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/StatementCreateResponse'
+        '401':
+          description: ошибка
+          schema:
+            type: object
+            example:
+              ошибка: Пользователь не авторизован ...
+    put:
+      tags:
+        - statement
+      summary: Обновление заявки
+      description: Обновить заявку после оплаты
+      operationId: userStatementUpdate
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          description: Ид заявки
+          required: true
+          schema:
+            $ref: '#/definitions/StatementUpdate'
+      responses:
+        '200':
+          description: OK
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: true
+              message:
+                type: string
+                example: Заявка успешно создана. Информация отправлена Вам на почту.
+        '401':
+          description: ошибка
+          schema:
+            type: object
+            example:
+              ошибка: Пользователь не авторизован ...
+  /referrals:
+    get:
+      # security:
+        # - bearerAuth: []
+      tags:
+        - referral
+      summary: Информация о рефералах
+      description: Получить рефералов, начисления и выплаты
+      operationId: userReferralsGet
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          description: ид пользователя?
+          required: true
+          schema:
+            $ref: '#/definitions/User'
+      responses:
+        '200':
+          description: OK
+          schema:
+            $ref: "#/definitions/ReferralResponse"
+        '401':
+          description: ошибка
+          schema:
+            type: object
+            example:
+              ошибка: Пользователь не авторизован ...
+# securityDefinitions:
+#   bearerAuth:
+#     type: basic
+#     scheme: bearer
+#     bearerFormat: JWT
+definitions:
+  UserRegister:
+    type: object
+    properties:
+      agreementChecked:
+        type: boolean
+        example: true
+      email:
+        type: string
+      gRecaptchaResponse:
+        type: string
+      password:
+        type: string
+      passwordConfirmation:
+        type: string
+    xml:
+      name: User
+  UserRegisterResponse:
+    type: object
+    properties:
+      accessToken:
+        type: string
+      expiresIn:
+        type: integer
+        format: int32
+        example: 3000
+      message:
+        type: string
+      success:
+        type: boolean
+        example: true
+      tokenType:
+        type: string
+      refreshToken:
+        type: string
+  UserLogin:
+    type: object
+    properties:
+      email:
+        type: string
+      gRecaptchaResponse:
+        type: string
+      password:
+        type: string
+  UserLoginResponse:
+    type: object
+    properties:
+      accessToken:
+        type: string
+      expiresIn:
+        type: integer
+        format: int32
+        example: 3000
+      message:
+        type: string
+      success:
+        type: boolean
+        example: true
+      tokenType:
+        type: string
+      refreshToken:
+        type: string
+  UserLogout:
+    type: object
+    properties:
+      refreshToken:
+        type: string
+  UserLogoutResponse:
+    type: object
+    properties:
+      message:
+        type: string
+      success:
+        type: boolean
+        example: true
+  RecoveryRequest:
+    type: object
+    properties:
+      email:
+        type: string
+      gRecaptchaResponse:
+        type: string
+  RecoveryRequestResponse:
+    type: object
+    properties:
+      message:
+        type: string
+      success:
+        type: boolean
+        example: true
+  RecoveryPassword:
+    type: object
+    properties:
+      password:
+        type: string
+      passwordConfirmation:
+        type: string
+      recoveryToken:
+        type: string
+  RecoveryPasswordResponse:
+    type: object
+    properties:
+      accessToken:
+        type: string
+      expiresIn:
+        type: number
+        format: int32
+        example: 3000
+      message:
+        type: string
+      success:
+        type: boolean
+        example: true
+      tokenType:
+        type: string
+      refreshToken:
+        type: string
+  ChangePassword:
+    type: object
+    properties:
+      oldPassword:
+        type: string
+      password:
+        type: string
+      passwordConfirmation:
+        type: string
+  ChangePasswordResponse:
+    type: object
+    properties:
+      accessToken:
+        type: string
+      expiresIn:
+        type: number
+        format: int32
+        example: 3000
+      message:
+        type: string
+      success:
+        type: boolean
+        example: true
+      tokenType:
+        type: string
+      refreshToken:
+        type: string
+  TokenRefresh:
+    type: object
+    properties:
+      refreshToken:
+        type: string
+  TokenRefreshResponse:
+    type: object
+    properties:
+      accessToken:
+        type: string
+      expiresIn:
+        type: integer
+        format: int32
+        example: 3000
+      message:
+        type: string
+      success:
+        type: boolean
+        example: true
+      tokenType:
+        type: string
+      refreshToken:
+        type: string
+  User:
+    type: object
+    properties:
+      # id:
+      #   type: integer
+      refreshToken:
+        type: string
+  UserResponse:
+    type: object
+    properties:
+      email:
+        type: string
+      id:
+        type: integer
+        format: int64
+        example: 4
+      success:
+        type: boolean
+        example: true
+  WalletCreate:
+    type: object
+    properties:
+      currency:
+        type: string
+      address:
+        type: string
+  WalletUpdate:
+    type: object
+    properties:
+      id:
+        type: integer
+        format: int64
+        example: 27
+      field:
+        type: string
+      value:
+        type: string
+  WalletResponse:
+    type: object
+    properties:
+      id:
+        type: integer
+        format: int64
+        example: 41
+      currency:
+        type: string
+      address:
+        type: string
+        example: 12pe45kGqQhP4zzf4PFLfSpAKoWGVF3gq2
+      name:
+        type: string
+        example: Кошелек для выплат
+      recipientName:
+        type: string
+      bankName:
+        type: string
+      destinationTagField:
+        type: string
+      paymentIdField:
+        type: string
+      messageField:
+        type: string
+      verificationPhoto:
+        type: string
+  StatementCreate:
+    type: object
+    properties:
+      exchangeFrom:
+        type: object
+        properties:
+          currency:
+            type: string
+            example: BTC
+          amount:
+            type: string
+            example: 0.02
+          bankName:
+            type: string
+            example: ''
+          destinationTagField:
+            type: string
+            example: ''
+          messageField:
+            type: string
+            example: ''
+          paymentIdField:
+            type: string
+            example: ''
+          senderEmail:
+            type: string
+            example: ''
+          senderName:
+            type: string
+            example: ''
+          senderWalletAddress:
+            type: string
+            example: ''
+          withoutDestinationTag:
+            type: string
+            example: false
+          withoutMessage:
+            type: string
+            example: false
+          withoutPaymentId:
+            type: string
+            example: false
+      exchangeTo:
+        type: object
+        properties:
+          currency:
+            type: string
+            example: ALFA
+          amount:
+            type: string
+            example: 8486.12
+          bankName:
+            type: string
+            example: ''
+          destinationTagField:
+            type: string
+            example: ''
+          messageField:
+            type: string
+            example: ''
+          paymentIdField:
+            type: string
+            example: ''
+          agreementChecked:
+            type: boolean
+            example: false
+          gRecaptchaResponse:
+            type: string
+            example: ''
+          recipientEmail:
+            type: string
+            example: ''
+          recipientName:
+            type: string
+            example: ''
+          recipientWalletAddress:
+            type: string
+            example: ''
+          saveWalletChecked:
+            type: boolean
+            example: false
+  StatementCreateResponse:
+    type: object
+    properties:
+      id:
+        type: integer
+        format: int64
+        example: 3259
+      remainingTime:
+        type: integer
+        example: 26000
+      exchangeFrom:
+        type: object
+        properties:
+          currency:
+            type: string
+            example: BTC
+          amount:
+            type: string
+            example: 0.02
+      exchangeTo:
+        type: object
+        properties:
+          currency:
+            type: string
+            example: ALFA
+          amount:
+            type: string
+            example: 8486.12
+      paymentWallet:
+        type: string
+        example: '16813023646135135'
+      paymentCard:
+        type: string
+        example: '1234 5678 1234 5678'
+      paymentPurpose:
+        type: string
+        example: 'личный перевод'
+      paymentDestinationTag:
+        type: string
+        example: '1543578459'
+      paymentPaymentId:
+        type: string
+        example: '1234'
+      paymentMessage:
+        type: string
+        example: '1234'
+      message:
+        type: string
+        example: Заявка принята, сделайте перевод ...
+      status:
+        type: string
+        example: Ожидает подтверждения платежа
+      success:
+        type: boolean
+        example: true
+  StatementUpdate:
+    type: object
+    properties:
+      id:
+        type: integer
+        format: int64
+        example: 2798
+  StatementResponse:
+    type: object
+    properties:
+      id:
+        type: integer
+        format: int64
+        example: 2481
+      addressFrom:
+        type: string
+        example: 'LgWtB9V2zQ5VexdF9VkiAimKwyyRf1Fjd7'
+      addressTo: 
+        type: string
+        example: '1234 5432 5678 4509'
+      currencyFrom:
+        type: string
+        example: 'LTC'
+      currencyTo:
+        type: string
+        example: 'ALFA'
+      amount:
+        type: object
+        properties:
+          currencyFrom:
+            type: string
+            example: 'LTC'
+          currencyTo:
+            type: string
+            example: 'RUB'
+          rateFrom:
+            type: string
+            example: 1
+          rateTo:
+            type: string
+            example: 3308.07
+          valueFrom:
+            type: string
+            example: 0.59
+          valueTo:
+            type: string
+            example: 1951.76
+      status:
+        type: string
+        example: 'Выполнена'
+      createdAt:
+        type: string
+        example: '12.12.2018 11:08'
+      completedAt:
+        type: string
+        example: '12.12.2018 11:22'
+  ReferralResponse:
+    type: object
+    properties:
+      referralReference:
+        type: string
+        example: 'https://webchange.org/4353235'
+      linkClicks: 
+        type: integer
+        example: 163
+      referrals:
+        type: array
+        items:
+          type: object
+          properties:
+            email:
+              type: string
+              example: test@test.test
+      accruals:
+        type: array
+        items:
+          type: object
+          properties:
+            amount:
+              type: object
+              properties:
+                currencyFrom:
+                  type: string
+                  example: 'LTC'
+                currencyTo:
+                  type: string
+                  example: 'RUB'
+                valueFrom:
+                  type: string
+                  example: 0.59
+                valueTo:
+                  type: string
+                  example: 1951.76
+            currencyFrom:
+              type: string
+              example: LTC
+            currencyTo:
+              type: string
+              example: ALFA
+            date:
+              type: string
+              example: 20.12.2018
+            id:
+              type: string
+              example: 32
+            payment:
+              type: object
+              properties:
+                currency:
+                  type: string
+                  example: 'USD'
+                value:
+                  type: number
+                  format: float
+                  example: 0.12
+            referralEmail:
+              type: string
+              example: test@test.test
+      profits:
+        type: array
+        items:
+          type: object
+          properties: 
+            currency:
+              type: string
+              example: ALFA
+            date:
+              type: string
+              example: 22.12.2018
+            id:
+              type: integer
+              example: 161
+            payment:
+              type: object
+              properties:
+                currency:
+                  type: string
+                  example: USD
+                value:
+                  type: number
+                  format: float
+                  example: '22.00'
+            walletId:
+              type: string
+              example: 1556 4648 9123 2568
